@@ -43,89 +43,52 @@
             cursor: pointer;
         }
         button:disabled { background-color: #555; }
-        audio { margin-top: 25px; width: 100%; max-width: 500px; }
-        .download-btn {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 20px;
-            background-color: #4caf50;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-        }
+        .info { margin-top: 20px; color: #4caf50; font-weight: bold; text-align: center; }
     </style>
 </head>
 <body>
 
-    <h2>আমার হিন্দি Swara Neural ভয়েস জেনারেটর</h2>
+    <h2>আমার হিন্দি ভয়েস জেনারেটর</h2>
 
-    <textarea id="textInput" placeholder="এখানে হিন্দি ডায়ালগ পেস্ট করুন..."></textarea>
+    <textarea id="textInput" placeholder="এখানে হিন্দি ডায়ালগ লিখুন..."></textarea>
     <br>
-    <button id="genBtn" onclick="generateTTS()">অডিও তৈরি করুন</button>
+    <button id="genBtn" onclick="speakHindi()">ভয়েস শুনুন</button>
 
-    <br>
-    <audio id="audioPlayer" controls style="display:none;"></audio>
-    <br>
-    <a id="downloadBtn" class="download-btn" style="display:none;">⬇️ MP3 ডাউনলোড করুন</a>
+    <div id="status" class="info"></div>
 
     <script>
-        async function generateTTS() {
+        function speakHindi() {
             const text = document.getElementById('textInput').value.trim();
-            const btn = document.getElementById('genBtn');
-            const audioPlayer = document.getElementById('audioPlayer');
-            const downloadBtn = document.getElementById('downloadBtn');
+            const status = document.getElementById('status');
 
             if (!text) {
                 alert('অনুগ্রহ করে কিছু হিন্দি লেখা লিখুন!');
                 return;
             }
 
-            btn.disabled = true;
-            btn.innerText = 'অডিও তৈরি হচ্ছে...';
-            audioPlayer.style.display = 'none';
-            downloadBtn.style.display = 'none';
-
-            try {
-                const proxyUrl = 'https://corsproxy.io/?';
-                const apiUrl = encodeURIComponent('https://tts.travisvn.com/api/tts');
-                
-                const response = await fetch(proxyUrl + apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        text: text,
-                        voice: 'hi-IN-SwaraNeural'
-                    })
-                });
-
-                if (!response.ok) throw new Error('API Error');
-
-                const blob = await response.blob();
-                const audioBlob = new Blob([blob], { type: 'audio/mp3' });
-                const audioUrl = URL.createObjectURL(audioBlob);
-
-                audioPlayer.src = audioUrl;
-                audioPlayer.style.display = 'block';
-
-                downloadBtn.href = audioUrl;
-                downloadBtn.download = 'drama_voice.mp3';
-                downloadBtn.style.display = 'inline-block';
-
-            } catch (err) {
-                const googleTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=hi&client=tw-ob`;
-                
-                audioPlayer.src = googleTtsUrl;
-                audioPlayer.style.display = 'block';
-
-                downloadBtn.href = googleTtsUrl;
-                downloadBtn.download = 'drama_voice.mp3';
-                downloadBtn.target = '_blank';
-                downloadBtn.style.display = 'inline-block';
-            } finally {
-                btn.disabled = false;
-                btn.innerText = 'অডিও তৈরি করুন';
+            if (!('speechSynthesis' in window)) {
+                alert('আপনার ব্রাউজার স্পিচ সিন্থেসিস সমর্থন করে না!');
+                return;
             }
+
+            // Cancel any ongoing speech
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'hi-IN'; // Hindi (India) voice
+            utterance.rate = 1.0; // Normal speed
+
+            status.innerText = '🔊 ভয়েস বাজানো হচ্ছে...';
+
+            utterance.onend = function() {
+                status.innerText = '✅ বলা সম্পন্ন হয়েছে!';
+            };
+
+            utterance.onerror = function() {
+                status.innerText = '❌ কোনো সমস্যা হয়েছে।';
+            };
+
+            window.speechSynthesis.speak(utterance);
         }
     </script>
 
