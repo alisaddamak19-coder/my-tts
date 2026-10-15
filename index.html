@@ -25,7 +25,7 @@
             height: 150px;
             padding: 12px;
             border-radius: 8px;
-            border: 1px solid #333;
+            border: none;
             background-color: #1e1e1e;
             color: #fff;
             font-size: 16px;
@@ -42,18 +42,18 @@
             font-weight: bold;
             cursor: pointer;
         }
-        button:disabled { background-color: #555; }
         audio { margin-top: 25px; width: 100%; max-width: 500px; }
         .download-btn {
             display: inline-block;
             margin-top: 15px;
-            padding: 10px 20px;
+            padding: 12px 24px;
             background-color: #4caf50;
             color: white;
             text-decoration: none;
             border-radius: 6px;
+            font-size: 16px;
             font-weight: bold;
-            cursor: pointer;
+            text-align: center;
         }
     </style>
 </head>
@@ -63,17 +63,15 @@
 
     <textarea id="textInput" placeholder="এখানে হিন্দি ডায়ালগ পেস্ট করুন..."></textarea>
     <br>
-    <button id="genBtn" onclick="generateTTS()">অডিও তৈরি করুন</button>
+    <button onclick="generateAudio()">অডিও তৈরি করুন</button>
 
     <br>
     <audio id="audioPlayer" controls style="display:none;"></audio>
     <br>
-    <button id="downloadBtn" class="download-btn" style="display:none;" onclick="downloadAudio()">⬇️ MP3 ডাউনলোড করুন</button>
+    <a id="downloadBtn" class="download-btn" style="display:none;">⬇️ MP3 ডাউনলোড করুন</a>
 
     <script>
-        let currentAudioUrl = '';
-
-        async function generateTTS() {
+        function generateAudio() {
             const text = document.getElementById('textInput').value.trim();
             const audioPlayer = document.getElementById('audioPlayer');
             const downloadBtn = document.getElementById('downloadBtn');
@@ -83,31 +81,15 @@
                 return;
             }
 
-            const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=hi&client=tw-ob`;
+            const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=hi&client=tw-ob`;
 
-            try {
-                const response = await fetch(ttsUrl);
-                const blob = await response.blob();
-                currentAudioUrl = URL.createObjectURL(blob);
+            audioPlayer.src = audioUrl;
+            audioPlayer.style.display = 'block';
+            audioPlayer.play();
 
-                audioPlayer.src = currentAudioUrl;
-                audioPlayer.style.display = 'block';
-                audioPlayer.play();
-
-                downloadBtn.style.display = 'inline-block';
-            } catch (err) {
-                alert('অডিও তৈরি করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
-            }
-        }
-
-        function downloadAudio() {
-            if (!currentAudioUrl) return;
-            const a = document.createElement('a');
-            a.href = currentAudioUrl;
-            a.download = 'hindi_drama_voice.mp3';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            downloadBtn.href = audioUrl;
+            downloadBtn.download = 'hindi_voice.mp3';
+            downloadBtn.style.display = 'inline-block';
         }
     </script>
 
