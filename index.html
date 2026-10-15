@@ -53,6 +53,7 @@
             text-decoration: none;
             border-radius: 6px;
             font-weight: bold;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -67,10 +68,12 @@
     <br>
     <audio id="audioPlayer" controls style="display:none;"></audio>
     <br>
-    <a id="downloadBtn" class="download-btn" style="display:none;">⬇️ MP3 ডাউনলোড করুন</a>
+    <button id="downloadBtn" class="download-btn" style="display:none;" onclick="downloadAudio()">⬇️ MP3 ডাউনলোড করুন</button>
 
     <script>
-        function generateTTS() {
+        let currentAudioUrl = '';
+
+        async function generateTTS() {
             const text = document.getElementById('textInput').value.trim();
             const audioPlayer = document.getElementById('audioPlayer');
             const downloadBtn = document.getElementById('downloadBtn');
@@ -80,16 +83,31 @@
                 return;
             }
 
-            // Using direct Google TTS audio stream which is fast and reliable
             const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=hi&client=tw-ob`;
 
-            audioPlayer.src = ttsUrl;
-            audioPlayer.style.display = 'block';
-            audioPlayer.play();
+            try {
+                const response = await fetch(ttsUrl);
+                const blob = await response.blob();
+                currentAudioUrl = URL.createObjectURL(blob);
 
-            downloadBtn.href = ttsUrl;
-            downloadBtn.download = 'hindi_voice.mp3';
-            downloadBtn.style.display = 'inline-block';
+                audioPlayer.src = currentAudioUrl;
+                audioPlayer.style.display = 'block';
+                audioPlayer.play();
+
+                downloadBtn.style.display = 'inline-block';
+            } catch (err) {
+                alert('অডিও তৈরি করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+            }
+        }
+
+        function downloadAudio() {
+            if (!currentAudioUrl) return;
+            const a = document.createElement('a');
+            a.href = currentAudioUrl;
+            a.download = 'hindi_drama_voice.mp3';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
     </script>
 
