@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="bn" translate="no">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>আমার হিন্দি Swara Neural ভয়েস জেনারেটর</title>
+    <title>হিন্দি ভয়েস জেনারেটর</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,7 +18,7 @@
             padding: 20px;
             box-sizing: border-box;
         }
-        h2 { text-align: center; margin-bottom: 20px; }
+        h2 { text-align: center; margin-bottom: 20px; color: #ff9800; }
         textarea {
             width: 100%;
             max-width: 500px;
@@ -42,54 +42,53 @@
             font-weight: bold;
             cursor: pointer;
         }
-        audio { margin-top: 25px; width: 100%; max-width: 500px; }
-        .download-btn {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 12px 24px;
-            background-color: #4caf50;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            text-align: center;
-        }
+        button:active { background-color: #e64a19; }
+        .status { margin-top: 20px; font-weight: bold; color: #4caf50; text-align: center; }
     </style>
 </head>
 <body>
 
-    <h2>আমার হিন্দি Swara Neural ভয়েস জেনারেটর</h2>
+    <h2>হিন্দি ভয়েস জেনারেটর</h2>
 
-    <textarea id="textInput" placeholder="এখানে হিন্দি ডায়ালগ পেস্ট করুন..."></textarea>
+    <textarea id="textInput" placeholder="এখানে হিন্দি ডায়ালগ লিখুন (যেমন: तुम मुझे कभी नहीं समझ पाओगे!)..."></textarea>
     <br>
-    <button onclick="generateAudio()">অডিও তৈরি করুন</button>
+    <button onclick="playHindiVoice()">ভয়েস শুনুন</button>
 
-    <br>
-    <audio id="audioPlayer" controls style="display:none;"></audio>
-    <br>
-    <a id="downloadBtn" class="download-btn" style="display:none;">⬇️ MP3 ডাউনলোড করুন</a>
+    <div id="statusMsg" class="status"></div>
 
     <script>
-        function generateAudio() {
+        function playHindiVoice() {
             const text = document.getElementById('textInput').value.trim();
-            const audioPlayer = document.getElementById('audioPlayer');
-            const downloadBtn = document.getElementById('downloadBtn');
+            const statusMsg = document.getElementById('statusMsg');
 
             if (!text) {
-                alert('অনুগ্রহ করে কিছু হিন্দি লেখা লিখুন!');
+                alert('অনুগ্রহ করে বক্সে কিছু হিন্দি লেখা লিখুন!');
                 return;
             }
 
-            const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=hi&client=tw-ob`;
+            if (!('speechSynthesis' in window)) {
+                alert('আপনার ব্রাউজার এই ভয়েস ফিচারটি সাপোর্ট করছে না!');
+                return;
+            }
 
-            audioPlayer.src = audioUrl;
-            audioPlayer.style.display = 'block';
-            audioPlayer.play();
+            // আগের কোনো ভয়েস চললে তা বন্ধ করে দেওয়া
+            window.speechSynthesis.cancel();
 
-            downloadBtn.href = audioUrl;
-            downloadBtn.download = 'hindi_voice.mp3';
-            downloadBtn.style.display = 'inline-block';
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'hi-IN'; // একদম নিখুঁত ভারতীয় হিন্দি ভয়েস
+            utterance.rate = 1.0; // স্বাভাবিক গতি
+
+            statusMsg.innerText = '🔊 ভয়েস বাজানো হচ্ছে...';
+
+            utterance.onend = function() {
+                statusMsg.innerText = '✅ বলা সম্পন্ন হয়েছে!';
+            };
+
+            utterance.onerror = function() {
+                statusMsg.innerText = '❌ ভয়েস চালাতে সমস্যা হয়েছে।';
+            };
+
+            window.speechSynthesis.speak(utterance);
         }
     </script>
 
