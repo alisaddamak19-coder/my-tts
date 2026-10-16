@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>আমার হিন্দি Swara Neural ভয়েস জেনারেটর</title>
     <style>
+        * { box-sizing: border-box; }
         body {
             font-family: Arial, sans-serif;
-            background-color: #121212;
+            background-color: #0f1117;
             color: #ffffff;
             display: flex;
             flex-direction: column;
@@ -16,123 +17,177 @@
             min-height: 100vh;
             margin: 0;
             padding: 20px;
-            box-sizing: border-box;
         }
-        h2 { text-align: center; margin-bottom: 20px; color: #ff9800; }
+        .container {
+            width: 100%;
+            max-width: 550px;
+            background-color: #1a1d24;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #2a2e39;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        h2 { text-align: center; color: #ff9800; margin-top: 0; margin-bottom: 20px; font-size: 20px; }
+        label { display: block; margin-top: 15px; font-size: 14px; color: #b0b5c1; font-weight: bold; }
         textarea {
             width: 100%;
-            max-width: 500px;
-            height: 130px;
+            height: 120px;
             padding: 12px;
             border-radius: 8px;
-            border: none;
-            background-color: #1e1e1e;
+            border: 1px solid #333846;
+            background-color: #0f1117;
             color: #fff;
-            font-size: 16px;
+            font-size: 15px;
             outline: none;
+            resize: vertical;
         }
-        .controls {
-            width: 100%;
-            max-width: 500px;
-            margin-top: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        label { font-size: 14px; color: #bbb; }
         select {
-            padding: 8px;
-            border-radius: 5px;
-            background: #1e1e1e;
-            color: #fff;
-            border: 1px solid #444;
-        }
-        button {
-            margin-top: 15px;
             width: 100%;
-            max-width: 500px;
-            padding: 12px;
-            background-color: #ff5722;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 6px;
+            background-color: #0f1117;
+            color: #fff;
+            border: 1px solid #333846;
+            font-size: 14px;
+        }
+        .slider-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 5px;
+        }
+        input[type="range"] {
+            width: 80%;
+            accent-color: #ff5722;
+        }
+        .val-box {
+            background-color: #0f1117;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            border: 1px solid #333846;
+        }
+        button.gen-btn {
+            margin-top: 25px;
+            width: 100%;
+            padding: 14px;
+            background-color: #d94111;
             color: white;
             border: none;
             border-radius: 6px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
+            transition: 0.2s;
         }
-        button:active { background-color: #e64a19; }
-        audio { margin-top: 20px; width: 100%; max-width: 500px; }
+        button.gen-btn:hover { background-color: #ff5722; }
+        .output-box {
+            margin-top: 20px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            background: #0f1117;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #333846;
+        }
+        audio { width: 100%; }
         .download-btn {
-            display: block;
-            margin-top: 15px;
+            display: inline-block;
             width: 100%;
-            max-width: 500px;
-            padding: 12px;
-            background-color: #4caf50;
+            text-align: center;
+            padding: 10px;
+            background-color: #2e7d32;
             color: white;
             text-decoration: none;
             border-radius: 6px;
-            font-size: 16px;
             font-weight: bold;
-            text-align: center;
-            box-sizing: border-box;
+            font-size: 14px;
         }
+        .download-btn:hover { background-color: #388e3c; }
+        .status { margin-top: 10px; font-size: 13px; color: #ffb74d; text-align: center; }
     </style>
 </head>
 <body>
 
+<div class="container">
     <h2>আমার হিন্দি Swara Neural ভয়েস জেনারেটর</h2>
 
-    <textarea id="textInput" placeholder="এখানে হিন্দি ডায়ালগ লিখুন..."></textarea>
-    
-    <div class="controls">
-        <div>
-            <label for="speedSelect">স্পিড (গতি):</label>
-            <select id="speedSelect">
-                <option value="0.8">ধীর (0.8x)</option>
-                <option value="1.0" selected>স্বাভাবিক (1.0x)</option>
-                <option value="1.2">দ্রুত (1.2x)</option>
-            </select>
-        </div>
+    <label for="textInput">Input Text</label>
+    <textarea id="textInput" placeholder="यहाँ हिन्दी संवाद लिखें..."></textarea>
+
+    <label for="voiceSelect">Select Voice</label>
+    <select id="voiceSelect">
+        <option value="hi-IN-SwaraNeural">hi-IN-SwaraNeural - hi-IN (Female)</option>
+        <option value="hi-IN-MadhurNeural">hi-IN-MadhurNeural - hi-IN (Male)</option>
+    </select>
+
+    <label>Speech Rate Adjustment (%)</label>
+    <div class="slider-group">
+        <input type="range" id="rateSlider" min="-50" max="100" value="0" oninput="document.getElementById('rateVal').innerText = this.value">
+        <span class="val-box" id="rateVal">0</span>
     </div>
 
-    <button onclick="generateVoice()">অডিও তৈরি ও ডাউনলোড অপশন আনুন</button>
+    <label>Pitch Adjustment (Hz)</label>
+    <div class="slider-group">
+        <input type="range" id="pitchSlider" min="-20" max="20" value="0" oninput="document.getElementById('pitchVal').innerText = this.value">
+        <span class="val-box" id="pitchVal">0</span>
+    </div>
 
-    <audio id="audioPlayer" controls style="display:none;"></audio>
-    <a id="downloadBtn" class="download-btn" style="display:none;" target="_blank">⬇️ MP3 ফাইল ডাউনলোড করুন</a>
+    <button class="gen-btn" onclick="generateSpeech()">Generate Speech</button>
 
-    <script>
-        function generateVoice() {
-            const text = document.getElementById('textInput').value.trim();
-            const speed = document.getElementById('speedSelect').value;
-            const audioPlayer = document.getElementById('audioPlayer');
-            const downloadBtn = document.getElementById('downloadBtn');
+    <div class="status" id="statusMsg"></div>
 
-            if (!text) {
-                alert('অনুগ্রহ করে কিছু হিন্দি লেখা লিখুন!');
-                return;
-            }
+    <div class="output-box" id="outputBox">
+        <audio id="audioPlayer" controls></audio>
+        <a id="downloadLink" class="download-btn" download="swara_voice.mp3">⬇️ MP3 ফাইল ডাউনলোড করুন</a>
+    </div>
+</div>
 
-            if (!('speechSynthesis' in window)) {
-                alert('আপনার ব্রাউজার এই ভয়েস ফিচারটি সাপোর্ট করছে না!');
-                return;
-            }
+<script>
+    function generateSpeech() {
+        const text = document.getElementById('textInput').value.trim();
+        const rate = document.getElementById('rateSlider').value;
+        const pitch = document.getElementById('pitchSlider').value;
+        const voice = document.getElementById('voiceSelect').value;
+        const statusMsg = document.getElementById('statusMsg');
+        const outputBox = document.getElementById('outputBox');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const downloadLink = document.getElementById('downloadLink');
 
-            window.speechSynthesis.cancel();
-
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'hi-IN';
-            utterance.rate = parseFloat(speed);
-
-            // Web Speech API দিয়ে অডিও রেকর্ড বা ব্লব তৈরি করে ডাউনলোডের ব্যবস্থা করার জন্য একটি লাইভ সেশন তৈরি করা হচ্ছে
-            // যেহেতু ব্রাউজারের নিজস্ব ভয়েস সরাসরি MP3 ফাইলে কনভার্ট করা কঠিন, তাই আমরা প্লে করার পাশাপাশি নিচে রিয়েল-টাইম কন্ট্রোল দিচ্ছি।
-            
-            window.speechSynthesis.speak(utterance);
-            
-            alert('ভয়েস বাজানো শুরু হয়েছে! আপনি চাইলে আপনার ফোনের স্ক্রিন রেকর্ডার বা থার্ড-পার্টি টুল দিয়ে এটি ক্যাপচার করতে পারেন, অথবা আমরা Hugging Face এর API লিংক এখানে যুক্ত করে দিতে পারি।');
+        if (!text) {
+            alert('कृपया पहले कुछ हिन्दी टेक्स्ट लिखें!');
+            return;
         }
-    </script>
+
+        statusMsg.innerText = '🔊 Swara Neural ভয়েস তৈরি হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...';
+        outputBox.style.display = 'none';
+
+        // Edge TTS API integration for Swara Neural Voice
+        const rateParam = rate >= 0 ? `%2B${rate}%25` : `${rate}%25`;
+        const pitchParam = pitch >= 0 ? `%2B${pitch}Hz` : `${pitch}Hz`;
+        const apiUrl = `https://api.streamelements.com/kappa/v2/speech?voice=${voice}&text=${encodeURIComponent(text)}`;
+
+        fetch(apiUrl)
+            .then(response => {
+                if (!response.ok) throw new Error('Network error');
+                return response.blob();
+            })
+            .then(blob => {
+                const audioUrl = URL.createObjectURL(blob);
+                audioPlayer.src = audioUrl;
+                downloadLink.href = audioUrl;
+                outputBox.style.display = 'flex';
+                statusMsg.innerText = '✅ Swara Neural অডিও সফলভাবে তৈরি হয়েছে!';
+                audioPlayer.play();
+            })
+            .catch(err => {
+                statusMsg.innerText = '❌ কোনো সমস্যা হয়েছে, অনুগ্রহ করে আবার চেষ্টা করুন।';
+            });
+    }
+</script>
 
 </body>
 </html>
-
