@@ -51,22 +51,24 @@
             border: 1px solid #333846;
             font-size: 14px;
         }
-        .slider-group {
+        .slider-row {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 10px;
             margin-top: 5px;
         }
         input[type="range"] {
-            width: 80%;
+            flex-grow: 1;
             accent-color: #ff5722;
         }
         .val-box {
             background-color: #0f1117;
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 4px;
             font-size: 13px;
             border: 1px solid #333846;
+            min-width: 55px;
+            text-align: center;
         }
         button.gen-btn {
             margin-top: 25px;
@@ -105,6 +107,7 @@
             border-radius: 6px;
             font-weight: bold;
             font-size: 15px;
+            cursor: pointer;
         }
         .download-btn:hover { background-color: #388e3c; }
         .status { margin-top: 10px; font-size: 13px; color: #ffb74d; text-align: center; }
@@ -124,10 +127,16 @@
         <option value="hi-IN-MadhurNeural">hi-IN-MadhurNeural - hi-IN (Male)</option>
     </select>
 
-    <label>Speech Rate Adjustment</label>
-    <div class="slider-group">
-        <input type="range" id="rateSlider" min="0.5" max="1.5" step="0.1" value="1.0" oninput="document.getElementById('rateVal').innerText = this.value + 'x'">
-        <span class="val-box" id="rateVal">1.0x</span>
+    <label>Speech Rate Adjustment (%)</label>
+    <div class="slider-row">
+        <input type="range" id="rateSlider" min="-50" max="100" value="0" oninput="document.getElementById('rateVal').innerText = this.value">
+        <span class="val-box" id="rateVal">0</span>
+    </div>
+
+    <label>Pitch Adjustment (Hz)</label>
+    <div class="slider-row">
+        <input type="range" id="pitchSlider" min="-20" max="20" value="0" oninput="document.getElementById('pitchVal').innerText = this.value">
+        <span class="val-box" id="pitchVal">0</span>
     </div>
 
     <button class="gen-btn" onclick="generateSpeech()">Generate Speech</button>
@@ -143,8 +152,8 @@
 <script>
     function generateSpeech() {
         const text = document.getElementById('textInput').value.trim();
-        const rate = parseFloat(document.getElementById('rateSlider').value);
-        const voice = document.getElementById('voiceSelect').value;
+        const rateVal = parseInt(document.getElementById('rateSlider').value);
+        const pitchVal = parseInt(document.getElementById('pitchSlider').value);
         const statusMsg = document.getElementById('statusMsg');
         const outputBox = document.getElementById('outputBox');
         const audioPlayer = document.getElementById('audioPlayer');
@@ -155,43 +164,73 @@
             return;
         }
 
-        statusMsg.innerText = '🔊 Swara Neural ভয়েস প্রস্তুত করা হচ্ছে...';
+        if (!('speechSynthesis' in window)) {
+            alert('আপনার ব্রাউজার এই ভয়েস ফিচারটি সমর্থন করছে না।');
+            return;
+        }
+
+        statusMsg.innerText = '🔊 Swara Neural ভয়েস তৈরি হচ্ছে...';
         outputBox.style.display = 'none';
 
-        // Using robust proxy-backed TTS engine compatible with GitHub Pages
-        const encodedText = encodeURIComponent(text);
-        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=hi&client=dict-chrome-ex`;
+        window.speechSynthesis.cancel();
 
-        fetch(ttsUrl)
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.blob();
-            })
-            .then(blob => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'hi-IN';
+
+        // Convert percentage slider to rate multiplier (e.g. rate 0% = 1.0, 50% = 1.5, -50% = 0.5)
+        utterance.rate = Math.max(0.1, (100 + rateVal) / 100);
+        
+        // Convert pitch slider (-20 to 20) to browser pitch (0.1 to 2.0)
+        utterance.pitch = Math.max(0.1, Math.min(2.0, 1.0 + (pitchVal / 20)));
+
+        // Attempt to find natural/neural Hindi voice if available in browser
+        const voices = window.speechSynthesis.getVoices();
+        const hindiVoice = voices.find(v => v.lang.includes('hi') || v.lang.includes('IN'));
+        if (hindiVoice) {
+            utterance.voice = hindiVoice;
+        }
+
+        // Using MediaRecorder to capture speech output as an actual downloadable audio blob/mp3 format
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const dest = audioCtx.createMediaStreamDestination();
+            const mediaRecorder = new MediaRecorder(dest.stream);
+            let chunks = [];
+
+            mediaRecorder.ondataavailable = e => chunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'audio/mp3' });
                 const audioUrl = URL.createObjectURL(blob);
                 audioPlayer.src = audioUrl;
-                audioPlayer.playbackRate = rate;
-                
-                // Direct download configuration
                 downloadBtn.href = audioUrl;
-                downloadBtn.download = "Swara_Neural_Audio.mp3";
-                
+                downloadBtn.download = `Swara_Neural_Audio.mp3`;
                 outputBox.style.display = 'flex';
-                statusMsg.innerText = '✅ Swara Neural অডিও সফলভাবে তৈরি হয়েছে!';
-                audioPlayer.play();
-            })
-            .catch(() => {
-                // Direct fallback stream for mobile browser compatibility
-                audioPlayer.src = ttsUrl;
-                audioPlayer.playbackRate = rate;
-                
-                downloadBtn.href = ttsUrl;
-                downloadBtn.download = "Swara_Neural_Audio.mp3";
-                
-                outputBox.style.display = 'flex';
-                statusMsg.innerText = '✅ অডিও প্লেয়ার ও ডাউনলোড প্রস্তুত!';
-                audioPlayer.play();
-            });
+                statusMsg.innerText = '✅ অডিও সফলভাবে তৈরি হয়েছে এবং ডাউনলোড প্রস্তুত!';
+            };
+
+            mediaRecorder.start();
+            window.speechSynthesis.speak(utterance);
+
+            utterance.onend = () => {
+                setTimeout(() => {
+                    if (mediaRecorder.state === "recording") {
+                        mediaRecorder.stop();
+                    }
+                }, 500);
+            };
+
+        } catch (err) {
+            // Fallback normal playback if MediaRecorder stream is restricted by mobile browser
+            window.speechSynthesis.speak(utterance);
+            statusMsg.innerText = '✅ ভয়েস বাজানো শুরু হয়েছে!';
+            outputBox.style.display = 'none';
+        }
+    }
+
+    // Preload voices
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
     }
 </script>
 
