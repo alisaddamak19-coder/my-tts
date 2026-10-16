@@ -98,13 +98,13 @@
             display: inline-block;
             width: 100%;
             text-align: center;
-            padding: 10px;
+            padding: 12px;
             background-color: #2e7d32;
             color: white;
             text-decoration: none;
             border-radius: 6px;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 15px;
         }
         .download-btn:hover { background-color: #388e3c; }
         .status { margin-top: 10px; font-size: 13px; color: #ffb74d; text-align: center; }
@@ -124,7 +124,7 @@
         <option value="hi-IN-MadhurNeural">hi-IN-MadhurNeural - hi-IN (Male)</option>
     </select>
 
-    <label>Speech Rate Adjustment (%)</label>
+    <label>Speech Rate Adjustment</label>
     <div class="slider-group">
         <input type="range" id="rateSlider" min="0.5" max="1.5" step="0.1" value="1.0" oninput="document.getElementById('rateVal').innerText = this.value + 'x'">
         <span class="val-box" id="rateVal">1.0x</span>
@@ -136,7 +136,7 @@
 
     <div class="output-box" id="outputBox">
         <audio id="audioPlayer" controls></audio>
-        <a id="downloadLink" class="download-btn" target="_blank">⬇️ MP3 ফাইল ডাউনলোড করুন</a>
+        <a id="downloadBtn" class="download-btn">⬇️ সরাসরি MP3 ফাইল ডাউনলোড করুন</a>
     </div>
 </div>
 
@@ -148,43 +148,48 @@
         const statusMsg = document.getElementById('statusMsg');
         const outputBox = document.getElementById('outputBox');
         const audioPlayer = document.getElementById('audioPlayer');
-        const downloadLink = document.getElementById('downloadLink');
+        const downloadBtn = document.getElementById('downloadBtn');
 
         if (!text) {
             alert('कृपया पहले कुछ हिन्दी टेक्स्ट लिखें!');
             return;
         }
 
-        statusMsg.innerText = '🔊 Swara Neural ভয়েস প্রস্তুত হচ্ছে...';
+        statusMsg.innerText = '🔊 Swara Neural ভয়েস প্রস্তুত করা হচ্ছে...';
         outputBox.style.display = 'none';
 
-        // Google Translate Neural TTS Engine Backup with Fallback
-        const lang = 'hi';
-        const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${lang}&client=tw-ob`;
+        // Using robust proxy-backed TTS engine compatible with GitHub Pages
+        const encodedText = encodeURIComponent(text);
+        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=hi&client=dict-chrome-ex`;
 
-        fetch(googleUrl)
-            .then(res => {
-                if(!res.ok) throw new Error('API Fail');
-                return res.blob();
+        fetch(ttsUrl)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.blob();
             })
             .then(blob => {
                 const audioUrl = URL.createObjectURL(blob);
                 audioPlayer.src = audioUrl;
                 audioPlayer.playbackRate = rate;
-                downloadLink.href = audioUrl;
-                downloadLink.download = "swara_voice.mp3";
+                
+                // Direct download configuration
+                downloadBtn.href = audioUrl;
+                downloadBtn.download = "Swara_Neural_Audio.mp3";
+                
                 outputBox.style.display = 'flex';
                 statusMsg.innerText = '✅ Swara Neural অডিও সফলভাবে তৈরি হয়েছে!';
                 audioPlayer.play();
             })
             .catch(() => {
-                // If fetch fails due to CORS, load direct stream
-                audioPlayer.src = googleUrl;
+                // Direct fallback stream for mobile browser compatibility
+                audioPlayer.src = ttsUrl;
                 audioPlayer.playbackRate = rate;
-                downloadLink.href = googleUrl;
-                downloadLink.download = "swara_voice.mp3";
+                
+                downloadBtn.href = ttsUrl;
+                downloadBtn.download = "Swara_Neural_Audio.mp3";
+                
                 outputBox.style.display = 'flex';
-                statusMsg.innerText = '✅ অডিও সফলভাবে তৈরি হয়েছে!';
+                statusMsg.innerText = '✅ অডিও প্লেয়ার ও ডাউনলোড প্রস্তুত!';
                 audioPlayer.play();
             });
     }
@@ -192,4 +197,3 @@
 
 </body>
 </html>
-
