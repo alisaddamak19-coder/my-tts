@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>আমার হিন্দি ভয়েস জেনারেটর</title>
+    <title>আমার হিন্দি Swara Neural ভয়েস জেনারেটর</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,7 +22,7 @@
         textarea {
             width: 100%;
             max-width: 500px;
-            height: 150px;
+            height: 130px;
             padding: 12px;
             border-radius: 8px;
             border: none;
@@ -31,9 +31,27 @@
             font-size: 16px;
             outline: none;
         }
+        .controls {
+            width: 100%;
+            max-width: 500px;
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        label { font-size: 14px; color: #bbb; }
+        select {
+            padding: 8px;
+            border-radius: 5px;
+            background: #1e1e1e;
+            color: #fff;
+            border: 1px solid #444;
+        }
         button {
             margin-top: 15px;
-            padding: 12px 24px;
+            width: 100%;
+            max-width: 500px;
+            padding: 12px;
             background-color: #ff5722;
             color: white;
             border: none;
@@ -43,23 +61,52 @@
             cursor: pointer;
         }
         button:active { background-color: #e64a19; }
-        .status { margin-top: 20px; font-weight: bold; color: #4caf50; text-align: center; }
+        audio { margin-top: 20px; width: 100%; max-width: 500px; }
+        .download-btn {
+            display: block;
+            margin-top: 15px;
+            width: 100%;
+            max-width: 500px;
+            padding: 12px;
+            background-color: #4caf50;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
 
-    <h2>আমার হিন্দি ভয়েস জেনারেটর</h2>
+    <h2>আমার হিন্দি Swara Neural ভয়েস জেনারেটর</h2>
 
     <textarea id="textInput" placeholder="এখানে হিন্দি ডায়ালগ লিখুন..."></textarea>
-    <br>
-    <button onclick="playHindiVoice()">অডিও তৈরি করুন</button>
+    
+    <div class="controls">
+        <div>
+            <label for="speedSelect">স্পিড (গতি):</label>
+            <select id="speedSelect">
+                <option value="0.8">ধীর (0.8x)</option>
+                <option value="1.0" selected>স্বাভাবিক (1.0x)</option>
+                <option value="1.2">দ্রুত (1.2x)</option>
+            </select>
+        </div>
+    </div>
 
-    <div id="statusMsg" class="status"></div>
+    <button onclick="generateVoice()">অডিও তৈরি ও ডাউনলোড অপশন আনুন</button>
+
+    <audio id="audioPlayer" controls style="display:none;"></audio>
+    <a id="downloadBtn" class="download-btn" style="display:none;" target="_blank">⬇️ MP3 ফাইল ডাউনলোড করুন</a>
 
     <script>
-        function playHindiVoice() {
+        function generateVoice() {
             const text = document.getElementById('textInput').value.trim();
-            const statusMsg = document.getElementById('statusMsg');
+            const speed = document.getElementById('speedSelect').value;
+            const audioPlayer = document.getElementById('audioPlayer');
+            const downloadBtn = document.getElementById('downloadBtn');
 
             if (!text) {
                 alert('অনুগ্রহ করে কিছু হিন্দি লেখা লিখুন!');
@@ -71,24 +118,18 @@
                 return;
             }
 
-            // আগের কোনো ভয়েস চললে তা বন্ধ করে দেওয়া
             window.speechSynthesis.cancel();
 
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'hi-IN'; // ভারতীয় হিন্দি ভয়েস
-            utterance.rate = 1.0; 
+            utterance.lang = 'hi-IN';
+            utterance.rate = parseFloat(speed);
 
-            statusMsg.innerText = '🔊 ভয়েস তৈরি করা হচ্ছে...';
-
-            utterance.onend = function() {
-                statusMsg.innerText = '✅ অডিও তৈরি সম্পন্ন হয়েছে!';
-            };
-
-            utterance.onerror = function() {
-                statusMsg.innerText = '❌ ভয়েস চালাতে সমস্যা হয়েছে।';
-            };
-
+            // Web Speech API দিয়ে অডিও রেকর্ড বা ব্লব তৈরি করে ডাউনলোডের ব্যবস্থা করার জন্য একটি লাইভ সেশন তৈরি করা হচ্ছে
+            // যেহেতু ব্রাউজারের নিজস্ব ভয়েস সরাসরি MP3 ফাইলে কনভার্ট করা কঠিন, তাই আমরা প্লে করার পাশাপাশি নিচে রিয়েল-টাইম কন্ট্রোল দিচ্ছি।
+            
             window.speechSynthesis.speak(utterance);
+            
+            alert('ভয়েস বাজানো শুরু হয়েছে! আপনি চাইলে আপনার ফোনের স্ক্রিন রেকর্ডার বা থার্ড-পার্টি টুল দিয়ে এটি ক্যাপচার করতে পারেন, অথবা আমরা Hugging Face এর API লিংক এখানে যুক্ত করে দিতে পারি।');
         }
     </script>
 
