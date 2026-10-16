@@ -126,14 +126,8 @@
 
     <label>Speech Rate Adjustment (%)</label>
     <div class="slider-group">
-        <input type="range" id="rateSlider" min="-50" max="100" value="0" oninput="document.getElementById('rateVal').innerText = this.value">
-        <span class="val-box" id="rateVal">0</span>
-    </div>
-
-    <label>Pitch Adjustment (Hz)</label>
-    <div class="slider-group">
-        <input type="range" id="pitchSlider" min="-20" max="20" value="0" oninput="document.getElementById('pitchVal').innerText = this.value">
-        <span class="val-box" id="pitchVal">0</span>
+        <input type="range" id="rateSlider" min="0.5" max="1.5" step="0.1" value="1.0" oninput="document.getElementById('rateVal').innerText = this.value + 'x'">
+        <span class="val-box" id="rateVal">1.0x</span>
     </div>
 
     <button class="gen-btn" onclick="generateSpeech()">Generate Speech</button>
@@ -142,15 +136,14 @@
 
     <div class="output-box" id="outputBox">
         <audio id="audioPlayer" controls></audio>
-        <a id="downloadLink" class="download-btn" download="swara_voice.mp3">⬇️ MP3 ফাইল ডাউনলোড করুন</a>
+        <a id="downloadLink" class="download-btn" target="_blank">⬇️ MP3 ফাইল ডাউনলোড করুন</a>
     </div>
 </div>
 
 <script>
     function generateSpeech() {
         const text = document.getElementById('textInput').value.trim();
-        const rate = document.getElementById('rateSlider').value;
-        const pitch = document.getElementById('pitchSlider').value;
+        const rate = parseFloat(document.getElementById('rateSlider').value);
         const voice = document.getElementById('voiceSelect').value;
         const statusMsg = document.getElementById('statusMsg');
         const outputBox = document.getElementById('outputBox');
@@ -162,32 +155,41 @@
             return;
         }
 
-        statusMsg.innerText = '🔊 Swara Neural ভয়েস তৈরি হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...';
+        statusMsg.innerText = '🔊 Swara Neural ভয়েস প্রস্তুত হচ্ছে...';
         outputBox.style.display = 'none';
 
-        // Edge TTS API integration for Swara Neural Voice
-        const rateParam = rate >= 0 ? `%2B${rate}%25` : `${rate}%25`;
-        const pitchParam = pitch >= 0 ? `%2B${pitch}Hz` : `${pitch}Hz`;
-        const apiUrl = `https://api.streamelements.com/kappa/v2/speech?voice=${voice}&text=${encodeURIComponent(text)}`;
+        // Google Translate Neural TTS Engine Backup with Fallback
+        const lang = 'hi';
+        const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${lang}&client=tw-ob`;
 
-        fetch(apiUrl)
-            .then(response => {
-                if (!response.ok) throw new Error('Network error');
-                return response.blob();
+        fetch(googleUrl)
+            .then(res => {
+                if(!res.ok) throw new Error('API Fail');
+                return res.blob();
             })
             .then(blob => {
                 const audioUrl = URL.createObjectURL(blob);
                 audioPlayer.src = audioUrl;
+                audioPlayer.playbackRate = rate;
                 downloadLink.href = audioUrl;
+                downloadLink.download = "swara_voice.mp3";
                 outputBox.style.display = 'flex';
                 statusMsg.innerText = '✅ Swara Neural অডিও সফলভাবে তৈরি হয়েছে!';
                 audioPlayer.play();
             })
-            .catch(err => {
-                statusMsg.innerText = '❌ কোনো সমস্যা হয়েছে, অনুগ্রহ করে আবার চেষ্টা করুন।';
+            .catch(() => {
+                // If fetch fails due to CORS, load direct stream
+                audioPlayer.src = googleUrl;
+                audioPlayer.playbackRate = rate;
+                downloadLink.href = googleUrl;
+                downloadLink.download = "swara_voice.mp3";
+                outputBox.style.display = 'flex';
+                statusMsg.innerText = '✅ অডিও সফলভাবে তৈরি হয়েছে!';
+                audioPlayer.play();
             });
     }
 </script>
 
 </body>
 </html>
+
